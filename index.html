@@ -56,7 +56,7 @@ body.main{height:100dvh;overflow:hidden}
 <script>
 const $=i=>document.getElementById(i);let cur=null,last="",st={};
 const ct=s=>new Date(s).toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour:"numeric",minute:"2-digit"})+" CT";
-const show=(i,v)=>$(i).style.display=v?"":"none",f=n=>"$"+Number(n||0).toFixed(2);
+const show=(i,v)=>{const d=v?"":"none";if($(i).style.display!==d)$(i).style.display=d},f=n=>"$"+Number(n||0).toFixed(2);
 const H=()=>JSON.parse(localStorage.getItem("taps")||"[]");
 const tapped=id=>H().some(h=>h.card_id===id&&h.choice=="BUY");
 function view(d){show("mainv",!d);$("detv").style.display=d?"block":"none";document.body.className=d?"":"main";scrollTo(0,0)}
@@ -65,26 +65,29 @@ let sx=null;addEventListener("touchstart",e=>sx=e.touches[0].clientX);
 addEventListener("touchend",e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;if(dx<-60)view(1);else if(dx>60)view(0);sx=null});
 function counts(){const d=new Date().toLocaleDateString("en-US",{timeZone:"America/Chicago"}),t=H().filter(h=>new Date(h.time).toLocaleDateString("en-US",{timeZone:"America/Chicago"})==d);
 return "Cards "+Math.max(st.cards_today||0,new Set(t.map(h=>h.card_id)).size)+" · Skipped "+Math.max(st.skipped_today||0,t.filter(h=>h.choice=="SKIP").length)+" · Approved "+Math.max(st.approved_today||0,t.filter(h=>h.choice=="BUY").length)+(st.example?" (example)":"")}
-function render(){const c=cur,live=c&&c.ticker&&(!c.expires||new Date(c.expires)>new Date())&&!tapped(c.card_id);
-show("card",live);show("idle",!live);$("upd").textContent="Last updated "+(c&&c.updated?ct(c.updated):"—");
-$("stats1").textContent="TODAY · "+counts();$("stats").textContent=counts();
-[1,2,3].forEach(n=>$("t"+n).className=live&&c.tier==n?"on":"");
-const P=st.positions||[];$("posh").textContent="POSITIONS · "+P.length+" · "+f(P.reduce((a,x)=>a+(x.value||0),0))+(st.example?" (example)":"");
-$("pos").innerHTML=P.map(x=>`${x.ticker} · ${x.shares} sh · cost ${f(x.cost)} · now ${f(x.value)}`).join("<br>")||"None";
-$("lastc").textContent=c&&c.ticker?c.ticker+" · score "+c.score+" · "+c.shares+" sh @ "+f(c.price)+" = "+f(c.total)+" · "+(c.stop_text||"")+(c.volume?" · vol "+Number(c.volume).toFixed(1)+"x":"")+(c.momentum?" · "+c.momentum:"")+(c.example?" (example)":""):"—";
+// per-field diff: only touch DOM nodes whose value changed; full reset when card_id changes
+const prev={};let prevId;
+const V=id=>({set t(v){v=String(v);if(prev[id+"t"]!==v){prev[id+"t"]=v;$(id).textContent=v}},set h(v){if(prev[id+"h"]!==v){prev[id+"h"]=v;$(id).innerHTML=v}},set c(v){if(prev[id+"c"]!==v){prev[id+"c"]=v;$(id).className=v}}});
+function render(){if(cur&&cur.card_id!==prevId){prevId=cur&&cur.card_id;for(const k in prev)delete prev[k]}const c=cur,live=c&&c.ticker&&(!c.expires||new Date(c.expires)>new Date())&&!tapped(c.card_id);
+show("card",live);show("idle",!live);V("upd").t="Last updated "+(c&&c.updated?ct(c.updated):"—");
+V("stats1").t="TODAY · "+counts();V("stats").t=counts();
+[1,2,3].forEach(n=>V("t"+n).c=live&&c.tier==n?"on":"");
+const P=st.positions||[];V("posh").t="POSITIONS · "+P.length+" · "+f(P.reduce((a,x)=>a+(x.value||0),0))+(st.example?" (example)":"");
+V("pos").h=P.map(x=>`${x.ticker} · ${x.shares} sh · cost ${f(x.cost)} · now ${f(x.value)}`).join("<br>")||"None";
+V("lastc").t=c&&c.ticker?c.ticker+" · score "+c.score+" · "+c.shares+" sh @ "+f(c.price)+" = "+f(c.total)+" · "+(c.stop_text||"")+(c.volume?" · vol "+Number(c.volume).toFixed(1)+"x":"")+(c.momentum?" · "+c.momentum:"")+(c.example?" (example)":""):"—";
 const F=st.fills||[],done=JSON.parse(localStorage.getItem("filled")||"{}");
 const Q=t=>{if(st.quotes&&st.quotes[t]!=null)return st.quotes[t];const p=(st.positions||[]).find(x=>x.ticker===t);return p&&p.shares?p.value/p.shares:null};
 const pf=(v,est)=>v==null?'<span class="g">—</span>':`<span style="color:${v>=0?"#1ec85a":"#e63c3c"};font-weight:700">${est?"est ":""}${v>=0?"UP":"DOWN"} $${Math.abs(v).toFixed(2)}</span>`;
-$("hist").innerHTML=H().slice(-30).reverse().map(h=>{let k="skp",lbl="SKIPPED",P2=null,est=0;if(h.choice=="BUY"){const fl=done[h.card_id]||F.find(x=>x.card_id===h.card_id);
+V("hist").h=H().slice(-30).reverse().map(h=>{let k="skp",lbl="SKIPPED",P2=null,est=0;if(h.choice=="BUY"){const fl=done[h.card_id]||F.find(x=>x.card_id===h.card_id);
 if(fl){done[h.card_id]=fl;k="fill";lbl="FILLED · "+fl.shares+" @ "+f(fl.price)+(fl.filled_at?" · "+ct(fl.filled_at):"");const q=Q(h.ticker);P2=fl.profit!=null?fl.profit:q!=null?(q-fl.price)*fl.shares:null}else{k="pend";lbl='<span class="spin"></span>BUY TAPPED · NOT FILLED YET';const q=Q(h.ticker);P2=q!=null&&h.price!=null?(q-h.price)*(h.shares||0):null;est=1}}
 return {k,html:`<div class="ent"><b>${h.ticker}</b> · score ${h.score??"?"} · ${h.shares??"?"} sh @ ${f(h.price)} · ${k=="skp"?'<span class="g">—</span>':pf(P2,est)}<div class="st ${k}">${lbl}</div></div>`}}).sort((x,y)=>({fill:0,pend:1,skp:2}[x.k]-{fill:0,pend:1,skp:2}[y.k])).map(e=>e.html).join("")||"None";
 localStorage.setItem("filled",JSON.stringify(done));
-if(!live)return;$("ex").textContent=c.example?"EXAMPLE DATA":"";
-$("score").textContent=c.score;$("tk").textContent=c.ticker;$("co").textContent=c.company||"";
-$("price").textContent=f(c.price);$("sh").textContent=c.shares+" SHARES · "+f(c.total);
-$("stop").textContent=c.stop_text||"";$("exp").textContent=c.expires?"Card expires "+ct(c.expires):"";
-show("rec",c.recommend===true);show("vol",c.volume>=1.5);$("vol").textContent="VOLUME "+Number(c.volume).toFixed(1)+"X";
-show("mom",!!c.momentum);$("mom").textContent=c.momentum||"";}
+if(!live)return;V("ex").t=c.example?"EXAMPLE DATA":"";
+V("score").t=c.score;V("tk").t=c.ticker;V("co").t=c.company||"";
+V("price").t=f(c.price);V("sh").t=c.shares+" SHARES · "+f(c.total);
+V("stop").t=c.stop_text||"";V("exp").t=c.expires?"Card expires "+ct(c.expires):"";
+show("rec",c.recommend===true);show("vol",c.volume>=1.5);V("vol").t="VOLUME "+Number(c.volume).toFixed(1)+"X";
+show("mom",!!c.momentum);V("mom").t=c.momentum||"";}
 const CARD_POLL_MS=30000,STATUS_POLL_MS=120000;let lastS="";
 async function pollStatus(){try{const t=await (await fetch("status.json?t="+Date.now(),{cache:"no-store"})).text();if(t!==lastS){lastS=t;st=JSON.parse(t);render()}}catch(e){}}
 async function pollCard(){try{const t=await (await fetch("card.json?t="+Date.now(),{cache:"no-store"})).text();if(t!==last){last=t;cur=JSON.parse(t);$("note2").textContent="";render()}}catch(e){}}
