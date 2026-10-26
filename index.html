@@ -85,10 +85,14 @@ $("price").textContent=f(c.price);$("sh").textContent=c.shares+" SHARES · "+f(c
 $("stop").textContent=c.stop_text||"";$("exp").textContent=c.expires?"Card expires "+ct(c.expires):"";
 show("rec",c.recommend===true);show("vol",c.volume>=1.5);$("vol").textContent="VOLUME "+Number(c.volume).toFixed(1)+"X";
 show("mom",!!c.momentum);$("mom").textContent=c.momentum||"";}
-async function poll(){try{st=await (await fetch("status.json?t="+Date.now(),{cache:"no-store"})).json()}catch(e){}
-try{const t=await (await fetch("card.json?t="+Date.now(),{cache:"no-store"})).text();if(t!==last){last=t;cur=JSON.parse(t);$("note2").textContent=""}}catch(e){}render()}
+const POLL_MS=120000;let lastS="";
+async function poll(){let ch=false;
+try{const t=await (await fetch("status.json?t="+Date.now(),{cache:"no-store"})).text();if(t!==lastS){lastS=t;st=JSON.parse(t);ch=true}}catch(e){}
+try{const t=await (await fetch("card.json?t="+Date.now(),{cache:"no-store"})).text();if(t!==last){last=t;cur=JSON.parse(t);$("note2").textContent="";ch=true}}catch(e){}
+if(ch)render()}
 function tap(ch){if(!cur)return;const h=H();h.push({card_id:cur.card_id,ticker:cur.ticker,score:cur.score,shares:cur.shares,price:cur.price,choice:ch,time:new Date().toISOString()});
 localStorage.setItem("taps",JSON.stringify(h.slice(-50)));$("note2").textContent=ch+" logged on this phone only — confirm in STOCKS chat (no trade placed)";render()}
 $("buy").onclick=()=>tap("BUY");$("skip").onclick=()=>tap("SKIP");
-poll();setInterval(poll,20000);
+poll();setInterval(poll,POLL_MS);setInterval(()=>{if(cur&&cur.expires&&new Date(cur.expires)<=new Date()&&$("card").style.display!="none")render()},30000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
 </script></body></html>
