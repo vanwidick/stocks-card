@@ -30,13 +30,13 @@ body{max-width:480px;margin:0 auto;padding:12px 10px 24px;font-size:4vw}
 <div id="rec" class="ban">RECOMMEND BUY</div><div id="vol" class="ban"></div><div id="mom" class="ban"></div>
 <div id="note"></div></div>
 <div id="none"><div class="b">No card right now</div><div id="upd" class="g sm"></div><div id="stats" class="g xs" style="margin-top:1em"></div></div>
-<div id="hist"></div>
+<div id="lastc" class="g xs" style="display:none"></div><div id="pos" class="xs" style="text-align:left;margin-top:1.2em"></div><div id="hist"></div>
 <script>
 const $=i=>document.getElementById(i);let cur=null,last="";
 const ct=s=>new Date(s).toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour:"numeric",minute:"2-digit"})+" CT";
 const show=(i,v)=>$(i).style.display=v?"":"none";
 function render(){const c=cur,live=c&&c.ticker&&(!c.expires||new Date(c.expires)>new Date());
-show("card",live);show("none",!live);if(c)$("upd").textContent="Last updated "+(c.updated?ct(c.updated):"—");if(!live)return;
+show("card",live);show("none",!live);show("lastc",!live&&c&&c.ticker);if(c&&c.ticker)$("lastc").textContent="Last card: "+c.ticker+" · score "+c.score+" · "+c.shares+" sh @ $"+Number(c.price).toFixed(2)+" = $"+Number(c.total).toFixed(2)+" · "+(c.stop_text||"")+(c.volume?" · vol "+Number(c.volume).toFixed(1)+"x":"")+(c.momentum?" · "+c.momentum:"");if(c)$("upd").textContent="Last updated "+(c.updated?ct(c.updated):"—");if(!live)return;
 [1,2,3].forEach(n=>$("t"+n).className=c.tier==n?"on":"");$("ex").textContent=c.example?"EXAMPLE DATA":"";
 $("score").textContent=c.score;$("tk").textContent=c.ticker;$("co").textContent=c.company||"";
 $("price").textContent="$"+Number(c.price).toFixed(2);$("sh").textContent=c.shares+" SHARES · $"+Number(c.total).toFixed(2);
@@ -46,7 +46,9 @@ show("mom",!!c.momentum);$("mom").textContent=c.momentum||"";}
 async function stats(){let st={};try{st=await (await fetch("status.json?t="+Date.now(),{cache:"no-store"})).json()}catch(e){}
 const d=new Date().toLocaleDateString("en-US",{timeZone:"America/Chicago"}),t=H().filter(h=>new Date(h.time).toLocaleDateString("en-US",{timeZone:"America/Chicago"})==d);
 const ls=t.filter(h=>h.choice=="SKIP").length,lb=t.filter(h=>h.choice=="BUY").length,lc=new Set(t.map(h=>h.card_id)).size;
-$("stats").textContent="TODAY · Cards "+Math.max(st.cards_today||0,lc)+" · Skipped "+Math.max(st.skipped_today||0,ls)+" · Approved "+Math.max(st.approved_today||0,lb)+(st.example?" (example)":"");}
+$("stats").textContent="TODAY · Cards "+Math.max(st.cards_today||0,lc)+" · Skipped "+Math.max(st.skipped_today||0,ls)+" · Approved "+Math.max(st.approved_today||0,lb)+(st.example?" (example)":"");
+const P=st.positions||[],f=n=>"$"+Number(n||0).toFixed(2);
+$("pos").innerHTML=P.length?`<div class="b">POSITIONS ${P.length} · ${f(P.reduce((a,x)=>a+(x.value||0),0))}${st.example?" (example)":""}</div>`+P.map(x=>`${x.ticker} · ${x.shares} sh · cost ${f(x.cost)} · now ${f(x.value)}`).join("<br>"):"";}
 async function poll(){stats();try{const r=await fetch("card.json?t="+Date.now(),{cache:"no-store"});const t=await r.text();if(t!==last){last=t;cur=JSON.parse(t);$("note").textContent="";render();}else render();}catch(e){}}
 const H=()=>JSON.parse(localStorage.getItem("taps")||"[]");
 function hist(){$("hist").innerHTML=H().slice(-8).reverse().map(h=>`${ct(h.time)} · ${h.choice} · ${h.ticker} (${h.card_id})`).join("<br>")}

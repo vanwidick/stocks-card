@@ -1,1 +1,1 @@
-{"example":true,"date":"2026-10-26","cards_today":3,"skipped_today":2,"approved_today":1,"updated":"2026-10-26T01:15:00-05:00"}
+{"example":true,"date":"2026-10-26","cards_today":3,"skipped_today":2,"approved_today":1,"positions":[{"ticker":"RIVN","shares":12,"cost":148.44,"value":151.20}],"updated":"2026-10-26T01:15:00-05:00"}
