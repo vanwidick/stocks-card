@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><title>v12 Tier Comparison (example)</title><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;background:#0b0d10;color:#ddd;font-family:system-ui,sans-serif}h1{font-size:16px;text-align:center;margin:10px 0;color:#888}
+#row{display:flex;justify-content:center;gap:var(--gap)}.col{width:calc(412px*var(--s))}.lbl{text-align:center;font-weight:800;letter-spacing:2px;margin:6px 0;font-size:18px}
+.box{width:calc(412px*var(--s));height:calc(915px*var(--s));overflow:hidden;border:1px solid #333;border-radius:8px}
+iframe{width:412px;height:915px;border:0;transform:scale(var(--s));transform-origin:0 0}</style></head><body>
+<h1>v12 card — Tier 1 / 2 / 3 side by side (EXAMPLE DATA)</h1><div id="row">
+<div class="col"><div class="lbl">TIER 1</div><div class="box"><iframe src="index.html?card=tier1.json"></iframe></div></div>
+<div class="col"><div class="lbl">TIER 2</div><div class="box"><iframe src="index.html?card=tier2.json"></iframe></div></div>
+<div class="col"><div class="lbl">TIER 3</div><div class="box"><iframe src="index.html?card=tier3.json"></iframe></div></div></div>
+<script>function fit(){const g=16,s=Math.min(1,(innerWidth-4*g)/(3*412),(innerHeight-90)/915);document.documentElement.style.setProperty('--s',s);document.documentElement.style.setProperty('--gap',g+'px')}fit();addEventListener('resize',fit)</script></body></html>

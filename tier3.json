@@ -1,0 +1,18 @@
+{
+ "example": true,
+ "version": "v12",
+ "tier": 3,
+ "score": 68,
+ "ticker": "F",
+ "company": "Ford Motor",
+ "price": 11.2,
+ "shares": 5,
+ "total": 56.0,
+ "stop_text": "Stop: 4% first 20-30 min, then 3% + ladder",
+ "expires": "2030-12-31T09:12:00-06:00",
+ "recommend": false,
+ "volume": 1.7,
+ "momentum": "UP 1.4% FIRST 30 MIN, LEVELING OFF",
+ "card_id": "example-tier3-f",
+ "updated": "2026-10-26T02:40:00-05:00"
+}

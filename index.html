@@ -90,7 +90,8 @@ show("rec",c.recommend===true);show("vol",c.volume>=1.5);V("vol").t="VOLUME "+Nu
 show("mom",!!c.momentum);V("mom").t=c.momentum||"";}
 const CARD_POLL_MS=30000,STATUS_POLL_MS=120000;let lastS="";
 async function pollStatus(){try{const t=await (await fetch("status.json?t="+Date.now(),{cache:"no-store"})).text();if(t!==lastS){lastS=t;st=JSON.parse(t);render()}}catch(e){}}
-async function pollCard(){try{const t=await (await fetch("card.json?t="+Date.now(),{cache:"no-store"})).text();if(t!==last){last=t;cur=JSON.parse(t);$("note2").textContent="";render()}}catch(e){}}
+const CARD_FILE=(new URLSearchParams(location.search).get("card")||"card.json").replace(/[^\w.-]/g,"")||"card.json";
+async function pollCard(){try{const t=await (await fetch(CARD_FILE+"?t="+Date.now(),{cache:"no-store"})).text();if(t!==last){last=t;cur=JSON.parse(t);$("note2").textContent="";render()}}catch(e){}}
 async function poll(){await Promise.all([pollStatus(),pollCard()])}
 function tap(ch){if(!cur)return;const h=H();h.push({card_id:cur.card_id,ticker:cur.ticker,score:cur.score,shares:cur.shares,price:cur.price,choice:ch,time:new Date().toISOString()});
 localStorage.setItem("taps",JSON.stringify(h.slice(-50)));$("note2").textContent=ch+" logged on this phone only — confirm in STOCKS chat (no trade placed)";render()}

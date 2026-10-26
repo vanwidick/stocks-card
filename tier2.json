@@ -1,0 +1,18 @@
+{
+ "example": true,
+ "version": "v12",
+ "tier": 2,
+ "score": 84,
+ "ticker": "SOFI",
+ "company": "SoFi Technologies",
+ "price": 15.4,
+ "shares": 8,
+ "total": 123.2,
+ "stop_text": "Stop: 4% first 20-30 min, then 3% + ladder",
+ "expires": "2030-12-31T09:12:00-06:00",
+ "recommend": true,
+ "volume": 2.6,
+ "momentum": "UP 3.1% FIRST 30 MIN",
+ "card_id": "example-tier2-sofi",
+ "updated": "2026-10-26T02:40:00-05:00"
+}

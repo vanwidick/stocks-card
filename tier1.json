@@ -1,0 +1,18 @@
+{
+ "example": true,
+ "version": "v12",
+ "tier": 1,
+ "score": 98,
+ "ticker": "RIVN",
+ "company": "Rivian Automotive",
+ "price": 12.37,
+ "shares": 12,
+ "total": 148.44,
+ "stop_text": "Stop: 4% first 20-30 min, then 3% + ladder",
+ "expires": "2030-12-31T09:12:00-06:00",
+ "recommend": true,
+ "volume": 4.8,
+ "momentum": "UP 6.2% FIRST 30 MIN, STILL CLIMBING",
+ "card_id": "example-tier1-rivn",
+ "updated": "2026-10-26T02:40:00-05:00"
+}
