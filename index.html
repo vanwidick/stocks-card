@@ -51,7 +51,7 @@ body.main{height:100dvh;overflow:hidden}
 <h3 id="posh">POSITIONS</h3><div id="pos"></div>
 <h3>LAST CARD</h3><div id="lastc" class="g"></div>
 <h3>CARD HISTORY (filled · pending · skipped, newest first)</h3><div id="hist"></div>
-<h3>NOTES</h3><div class="g" style="font-size:12px">BUY/SKIP never place a trade and this page never contacts Schwab. BUY hides the card; SKIP is logged but keeps the card up. Taps are saved only in this phone's browser — confirm in STOCKS chat. Yellow = BUY pending, green = filled (from status.json fills), red = skipped. v12</div>
+<h3>NOTES</h3><div class="g" style="font-size:12px">BUY/SKIP never place a trade and this page never contacts Schwab. BUY hides the card; SKIP is logged but keeps the card up. Taps are saved only in this phone's browser — confirm in STOCKS chat. Profit uses status.json fills[].profit, else quotes{TICKER:price} or position value. Yellow = BUY pending, green = filled (from status.json fills), red = skipped. v12</div>
 </div>
 <script>
 const $=i=>document.getElementById(i);let cur=null,last="",st={};
@@ -73,9 +73,11 @@ const P=st.positions||[];$("posh").textContent="POSITIONS · "+P.length+" · "+f
 $("pos").innerHTML=P.map(x=>`${x.ticker} · ${x.shares} sh · cost ${f(x.cost)} · now ${f(x.value)}`).join("<br>")||"None";
 $("lastc").textContent=c&&c.ticker?c.ticker+" · score "+c.score+" · "+c.shares+" sh @ "+f(c.price)+" = "+f(c.total)+" · "+(c.stop_text||"")+(c.volume?" · vol "+Number(c.volume).toFixed(1)+"x":"")+(c.momentum?" · "+c.momentum:"")+(c.example?" (example)":""):"—";
 const F=st.fills||[],done=JSON.parse(localStorage.getItem("filled")||"{}");
-$("hist").innerHTML=H().slice(-30).reverse().map(h=>{let k="skp",lbl="SKIPPED";if(h.choice=="BUY"){const fl=done[h.card_id]||F.find(x=>x.card_id===h.card_id);
-if(fl){done[h.card_id]=fl;k="fill";lbl="FILLED · "+fl.shares+" @ "+f(fl.price)+(fl.filled_at?" · "+ct(fl.filled_at):"")}else{k="pend";lbl='<span class="spin"></span>BUY TAPPED · NOT FILLED YET'}}
-return {k,html:`<div class="ent"><b>${h.ticker}</b> · score ${h.score??"?"} · ${h.shares??"?"} sh @ ${f(h.price)}<div class="st ${k}">${lbl}</div></div>`}}).sort((x,y)=>({fill:0,pend:1,skp:2}[x.k]-{fill:0,pend:1,skp:2}[y.k])).map(e=>e.html).join("")||"None";
+const Q=t=>{if(st.quotes&&st.quotes[t]!=null)return st.quotes[t];const p=(st.positions||[]).find(x=>x.ticker===t);return p&&p.shares?p.value/p.shares:null};
+const pf=(v,est)=>v==null?'<span class="g">—</span>':`<span style="color:${v>=0?"#1ec85a":"#e63c3c"};font-weight:700">${est?"est ":""}${v>=0?"UP":"DOWN"} $${Math.abs(v).toFixed(2)}</span>`;
+$("hist").innerHTML=H().slice(-30).reverse().map(h=>{let k="skp",lbl="SKIPPED",P2=null,est=0;if(h.choice=="BUY"){const fl=done[h.card_id]||F.find(x=>x.card_id===h.card_id);
+if(fl){done[h.card_id]=fl;k="fill";lbl="FILLED · "+fl.shares+" @ "+f(fl.price)+(fl.filled_at?" · "+ct(fl.filled_at):"");const q=Q(h.ticker);P2=fl.profit!=null?fl.profit:q!=null?(q-fl.price)*fl.shares:null}else{k="pend";lbl='<span class="spin"></span>BUY TAPPED · NOT FILLED YET';const q=Q(h.ticker);P2=q!=null&&h.price!=null?(q-h.price)*(h.shares||0):null;est=1}}
+return {k,html:`<div class="ent"><b>${h.ticker}</b> · score ${h.score??"?"} · ${h.shares??"?"} sh @ ${f(h.price)} · ${k=="skp"?'<span class="g">—</span>':pf(P2,est)}<div class="st ${k}">${lbl}</div></div>`}}).sort((x,y)=>({fill:0,pend:1,skp:2}[x.k]-{fill:0,pend:1,skp:2}[y.k])).map(e=>e.html).join("")||"None";
 localStorage.setItem("filled",JSON.stringify(done));
 if(!live)return;$("ex").textContent=c.example?"EXAMPLE DATA":"";
 $("score").textContent=c.score;$("tk").textContent=c.ticker;$("co").textContent=c.company||"";
