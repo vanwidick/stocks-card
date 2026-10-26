@@ -28,7 +28,8 @@ body.main{height:100dvh;overflow:hidden}
 .st{border-radius:10px;padding:6px 10px;margin:6px 0;color:#fff;border:1.5px solid}
 .pend{background:rgba(240,190,60,.17);border-color:#f0be3c;box-shadow:0 0 12px rgba(240,190,60,.5)}
 .fill{background:rgba(30,200,90,.17);border-color:#1ec85a;box-shadow:0 0 12px rgba(30,200,90,.5)}
-.skp{background:rgba(230,60,60,.17);border-color:#e63c3c;box-shadow:0 0 12px rgba(230,60,60,.5)}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid #f0be3c;border-top-color:transparent;border-radius:50%;animation:sp 1s linear infinite;margin-right:6px;vertical-align:-1px}@keyframes sp{to{transform:rotate(360deg)}}
+.ent{margin:10px 0 14px}.skp{background:rgba(230,60,60,.17);border-color:#e63c3c;box-shadow:0 0 12px rgba(230,60,60,.5)}
 </style></head><body class="main">
 <div id="mainv" class="view">
 <div class="tiers"><div id="t1">TIER 1</div><div id="t2">TIER 2</div><div id="t3">TIER 3</div><button class="tab" id="more">MORE ›</button></div>
@@ -49,15 +50,15 @@ body.main{height:100dvh;overflow:hidden}
 <h3>TODAY</h3><div id="stats"></div>
 <h3 id="posh">POSITIONS</h3><div id="pos"></div>
 <h3>LAST CARD</h3><div id="lastc" class="g"></div>
-<h3>TAPS ON THIS PHONE</h3><div id="hist"></div>
-<h3>NOTES</h3><div class="g" style="font-size:12px">BUY/SKIP never place a trade. Taps are saved only in this phone's browser — confirm in STOCKS chat. Yellow = BUY pending, green = filled (per status.json), red = skipped. v12</div>
+<h3>CARD HISTORY (newest first)</h3><div id="hist"></div>
+<h3>NOTES</h3><div class="g" style="font-size:12px">BUY/SKIP never place a trade and this page never contacts Schwab. BUY hides the card; SKIP is logged but keeps the card up. Taps are saved only in this phone's browser — confirm in STOCKS chat. Yellow = BUY pending, green = filled (from status.json fills), red = skipped. v12</div>
 </div>
 <script>
 const $=i=>document.getElementById(i);let cur=null,last="",st={};
 const ct=s=>new Date(s).toLocaleTimeString("en-US",{timeZone:"America/Chicago",hour:"numeric",minute:"2-digit"})+" CT";
 const show=(i,v)=>$(i).style.display=v?"":"none",f=n=>"$"+Number(n||0).toFixed(2);
 const H=()=>JSON.parse(localStorage.getItem("taps")||"[]");
-const tapped=id=>H().some(h=>h.card_id===id);
+const tapped=id=>H().some(h=>h.card_id===id&&h.choice=="BUY");
 function view(d){show("mainv",!d);$("detv").style.display=d?"block":"none";document.body.className=d?"":"main";scrollTo(0,0)}
 $("more").onclick=()=>view(1);$("back").onclick=()=>view(0);
 let sx=null;addEventListener("touchstart",e=>sx=e.touches[0].clientX);
@@ -71,8 +72,11 @@ $("stats1").textContent="TODAY · "+counts();$("stats").textContent=counts();
 const P=st.positions||[];$("posh").textContent="POSITIONS · "+P.length+" · "+f(P.reduce((a,x)=>a+(x.value||0),0))+(st.example?" (example)":"");
 $("pos").innerHTML=P.map(x=>`${x.ticker} · ${x.shares} sh · cost ${f(x.cost)} · now ${f(x.value)}`).join("<br>")||"None";
 $("lastc").textContent=c&&c.ticker?c.ticker+" · score "+c.score+" · "+c.shares+" sh @ "+f(c.price)+" = "+f(c.total)+" · "+(c.stop_text||"")+(c.volume?" · vol "+Number(c.volume).toFixed(1)+"x":"")+(c.momentum?" · "+c.momentum:"")+(c.example?" (example)":""):"—";
-const fills=st.filled||[];$("hist").innerHTML=H().slice(-15).reverse().map(h=>{const k=h.choice=="SKIP"?"skp":fills.includes(h.card_id)?"fill":"pend";
-return `<div class="st ${k}">${ct(h.time)} · ${h.choice=="SKIP"?"SKIPPED":k=="fill"?"FILLED":"BUY PENDING"} · ${h.ticker}</div>`}).join("")||"None";
+const F=st.fills||[],done=JSON.parse(localStorage.getItem("filled")||"{}");
+$("hist").innerHTML=H().slice(-30).reverse().map(h=>{let k="skp",lbl="SKIPPED";if(h.choice=="BUY"){const fl=done[h.card_id]||F.find(x=>x.card_id===h.card_id);
+if(fl){done[h.card_id]=fl;k="fill";lbl="FILLED · "+fl.shares+" @ "+f(fl.price)+(fl.filled_at?" · "+ct(fl.filled_at):"")}else{k="pend";lbl='<span class="spin"></span>BUY TAPPED · NOT FILLED YET'}}
+return {k,html:`<div class="ent"><b>${h.ticker}</b> · score ${h.score??"?"} · ${h.shares??"?"} sh @ ${f(h.price)}<div class="st ${k}">${lbl}</div></div>`}}).sort((x,y)=>({fill:0,pend:1,skp:2}[x.k]-{fill:0,pend:1,skp:2}[y.k])).map(e=>e.html).join("")||"None";
+localStorage.setItem("filled",JSON.stringify(done));
 if(!live)return;$("ex").textContent=c.example?"EXAMPLE DATA":"";
 $("score").textContent=c.score;$("tk").textContent=c.ticker;$("co").textContent=c.company||"";
 $("price").textContent=f(c.price);$("sh").textContent=c.shares+" SHARES · "+f(c.total);
@@ -81,7 +85,7 @@ show("rec",c.recommend===true);show("vol",c.volume>=1.5);$("vol").textContent="V
 show("mom",!!c.momentum);$("mom").textContent=c.momentum||"";}
 async function poll(){try{st=await (await fetch("status.json?t="+Date.now(),{cache:"no-store"})).json()}catch(e){}
 try{const t=await (await fetch("card.json?t="+Date.now(),{cache:"no-store"})).text();if(t!==last){last=t;cur=JSON.parse(t);$("note2").textContent=""}}catch(e){}render()}
-function tap(ch){if(!cur)return;const h=H();h.push({card_id:cur.card_id,ticker:cur.ticker,choice:ch,time:new Date().toISOString()});
+function tap(ch){if(!cur)return;const h=H();h.push({card_id:cur.card_id,ticker:cur.ticker,score:cur.score,shares:cur.shares,price:cur.price,choice:ch,time:new Date().toISOString()});
 localStorage.setItem("taps",JSON.stringify(h.slice(-50)));$("note2").textContent=ch+" logged on this phone only — confirm in STOCKS chat (no trade placed)";render()}
 $("buy").onclick=()=>tap("BUY");$("skip").onclick=()=>tap("SKIP");
 poll();setInterval(poll,20000);
