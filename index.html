@@ -19,6 +19,7 @@ body.main{height:100dvh;overflow:hidden}
 .btns{display:flex;gap:6%;margin:0 2%}.btns button{flex:1;height:15vh;border:0;border-radius:16px;color:#fff;font-size:4.2vh;font-weight:700}
 #skip{background:#d22d2d}#buy{background:#1eaa46}button:active{filter:brightness(1.3)}
 .ban{background:#143c8c;border:3px solid #5aaaff;border-radius:12px;font-weight:700;margin:0 auto}
+#pcl{display:inline-block;border-width:2px;border-radius:999px;padding:.35vh 14px;font-size:1.3vh;letter-spacing:1px;margin-top:.8vh}#pcl:empty{display:none}
 #rec{width:86%;padding:.8vh;font-size:2.6vh}#vol{width:72%;padding:.5vh;font-size:2.1vh}#mom{width:86%;padding:.4vh;font-size:1.4vh}
 #note{color:#5aaaff;font-weight:700;font-size:1.5vh}
 #idle{justify-content:center;gap:2vh;font-size:2.6vh}
@@ -34,7 +35,7 @@ body.main{height:100dvh;overflow:hidden}
 <div id="mainv" class="view">
 <div class="tiers"><div id="t1">TIER 1</div><div id="t2">TIER 2</div><div id="t3">TIER 3</div><button class="tab" id="more">MORE ›</button></div>
 <div id="card" style="display:none">
-<div><div id="lbl" class="g b">STOCKS · BUY CARD</div><div id="ex"></div>
+<div><div id="pcl" class="ban"></div><div id="lbl" class="g b">STOCKS · BUY CARD</div><div id="ex"></div>
 <div id="score" class="gold b"></div><div class="g b lab">SCORE</div></div>
 <div><div id="tk" class="b"></div><div id="co" class="g"></div></div>
 <div><div id="price" class="b"></div><div class="g lab">per share</div></div>
@@ -83,7 +84,7 @@ if(fl){done[h.card_id]=fl;k="fill";lbl="FILLED · "+fl.shares+" @ "+f(fl.price)+
 return {k,html:`<div class="ent"><b>${h.ticker}</b> · score ${h.score??"?"} · ${h.shares??"?"} sh @ ${f(h.price)} · ${k=="skp"?'<span class="g">—</span>':pf(P2,est)}<div class="st ${k}">${lbl}</div></div>`}}).sort((x,y)=>({fill:0,pend:1,skp:2}[x.k]-{fill:0,pend:1,skp:2}[y.k])).map(e=>e.html).join("")||"None";
 localStorage.setItem("filled",JSON.stringify(done));
 if(!live)return;V("ex").t=c.example?"EXAMPLE DATA":"";
-V("score").t=c.score;V("tk").t=c.ticker;V("co").t=c.company||"";
+{const p=Number(c.price);V("pcl").t=p>=1&&p<10?"LIGHT CARD":p>=10&&p<=80?"HEAVY CARD":"";}V("score").t=c.score;V("tk").t=c.ticker;V("co").t=c.company||"";
 V("price").t=f(c.price);V("sh").t=c.shares+" SHARES · "+f(c.total);
 V("stop").t=c.stop_text||"";V("exp").t=c.expires?"Card expires "+ct(c.expires):"";
 show("rec",c.recommend===true);show("vol",c.volume>=1.5);V("vol").t="VOLUME "+Number(c.volume).toFixed(1)+"X";
