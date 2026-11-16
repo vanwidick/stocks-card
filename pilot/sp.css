@@ -34,3 +34,6 @@ select,input[type=text],input[type=password]{width:100%;padding:11px 12px;border
 .win .tb b{letter-spacing:.04em}.win .tb em{font-style:normal;opacity:.7}
 .win .bd{padding:14px 16px}
 .ok{color:var(--green);font-weight:700}
+
+.perm label{display:block;color:var(--text);font-size:13.5px;line-height:1.4;margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#0a1430}.perm label em{color:var(--muted);font-style:normal;font-size:12px}.perm input{margin-right:6px;transform:scale(1.15)}.perm .agree{border-color:var(--gold)}
+.legal h2{text-transform:none;letter-spacing:.02em;font-size:15.5px}.legalnote{border-left-color:#ffb347}
